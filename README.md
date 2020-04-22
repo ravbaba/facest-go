@@ -13,7 +13,7 @@ go get -u github.com/facest/facest-go
 
 ## Usage
 
-```
+```go
 import "github.com/facest/facest-go"
 
 // Replace API_KEY with your real key
