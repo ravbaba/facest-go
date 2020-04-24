@@ -13,6 +13,9 @@ const (
 	faceID = "integration_face_id"
 )
 
+// will be set by TestGetFaces
+var faceToken string
+
 func TestDetect(t *testing.T) {
 	c := NewClient(os.Getenv("FACEST_INTEGRATION_API_KEY"))
 
@@ -101,9 +104,42 @@ func TestRecognize(t *testing.T) {
 		assert.NotNil(t, res, "expecting non-nil result")
 		if res != nil {
 			assert.Equal(t, 1, res.Count, "expecting 1 face found")
-			assert.Less(t, 0.6, res.Faces[0].Confidence, "expecting confidence > 0.6")
-			assert.Greater(t, 0.75, res.Faces[0].Confidence, "expecting confidence < 0.75")
+			assert.Less(t, res.Faces[0].Confidence, 0.75, "expecting confidence < 0.75")
+			assert.Greater(t, res.Faces[0].Confidence, 0.6, "expecting confidence > 0.6")
 			assert.Equal(t, faceID, res.Faces[0].FaceID, "expecting correct face_id")
 		}
+	}
+}
+
+func TestGetFaces(t *testing.T) {
+	c := NewClient(os.Getenv("FACEST_INTEGRATION_API_KEY"))
+
+	res, err := c.GetFaces(nil)
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+	if res != nil {
+		assert.Equal(t, 1, res.Count, "expecting 1 face found")
+		assert.Equal(t, 1, res.PagesCount, "expecting 1 PAGE found")
+
+		if res.Count > 0 {
+			assert.Equal(t, faceID, res.Faces[0].FaceID, "expecting correct face_id")
+			assert.NotEmpty(t, res.Faces[0].FaceToken, "expecting non-empty face_token")
+			assert.Greater(t, len(res.Faces[0].FaceImages), 0, "expecting non-empty face_images")
+
+			faceToken = res.Faces[0].FaceToken
+		}
+	}
+}
+
+func TestGetFace(t *testing.T) {
+	c := NewClient(os.Getenv("FACEST_INTEGRATION_API_KEY"))
+
+	res, err := c.GetFace(faceToken)
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+	if res != nil {
+		assert.Equal(t, faceID, res.FaceID, "expecting correct face_id")
+		assert.Equal(t, faceToken, res.FaceToken, "expecting non-empty face_token")
+		assert.Greater(t, len(res.FaceImages), 0, "expecting non-empty face_images")
 	}
 }
